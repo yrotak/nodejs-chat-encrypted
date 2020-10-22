@@ -12,9 +12,9 @@ let instanceID = "";
 app.get('/', function (req, res) {
   res.render('index', { id: instanceID, error: null });
 })
-const server = http.listen(5552, function () {
+const server = http.listen(3000, function () {
   instanceID = genID(10);
-  console.log('Started on 5552');
+  console.log('Started on 3000');
 });
 io.sockets.on('connection', function (socket) {
   socket.on('username', function (username) {
