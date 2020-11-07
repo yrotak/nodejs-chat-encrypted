@@ -38,7 +38,7 @@ io.sockets.on('connection', function(socket) {
         chatsnames.push(element.name);
     }
     io.emit('channels', chatsnames);
-  }, 1000);
+  }, 500);
   socket.on('create_chat', function(name, key, public) {
     var alreadyUsed = false;
     for (const element of chatsnames)
