@@ -7,5 +7,5 @@ This is an advanced NodeJs chat. Every packets are encrypted with RC4.<br>
 -Encryption key corruption detection<br>
 
 ## Next update:
--Patching exploits (Crash exploit)
+-Patching exploits (Crash exploit)<br>
 -Responsive
