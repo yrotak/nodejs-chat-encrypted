@@ -1,7 +1,12 @@
 # nodejs-chat-encrypted
-This is an advandced NodeJs chat. Every packets are encrypted with RC4.<br>
+This is an advanced NodeJs chat. Every packets are encrypted with RC4.<br>
 ## Features:<br>
 -Create channel<br>
 -Talk in channels<br>
 -Private channel with password<br>
 -Encryption key corruption detection<br>
+
+## Next update:
+-Patching exploits (Crash exploit)
+-Responsive
+-Optimize buttons (don't need to spam on button to access channels)
