@@ -2,87 +2,182 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200&display=swap" rel="stylesheet">
+  <link href='https://css.gg/arrow-right-o.css' rel='stylesheet'>
+  <title>Advanced chat</title>
 </head>
 <style>
-    body {
-        font-family: 'Montserrat';
-    }
+  body {
+    font-family: 'Montserrat';
+    background-color: #23272a;
+  }
 
-    li {
-        text-decoration: none;
-        list-style-type: none;
-    }
+  li {
+    text-decoration: none;
+    list-style-type: none;
+  }
 
-    #messages {
-        border: #232323 solid 1px;
-        border-radius: 8px;
-        padding: 15px;
-        height: 35vh;
-        overflow: scroll;
-        overflow-x: hidden;
-    }
+  #messages {
+    border-radius: 8px;
+    padding: 15px;
+    height: 35vh;
+    overflow: scroll;
+    overflow-x: hidden;
+    color: #fff;
+    background-color: #292b2f;
+  }
+
+  .channels-block{
+    background-color: #292b2f;
+    width: 150px;
+    height: 940px;
+    padding-top: 10px;
+    padding-left: 20px;
+    padding-right: 100px;
+    border-radius: 5px;
+  }
+
+  .btn-channel {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 10px;
+    padding-right: 10px;
+    cursor: pointer;
+    background: #292b2f;
+    border-radius: 4px;
+    color: #72767d;
+  }
+
+  .btn-channel:hover{
+    background-color: #36393f;
+    color: #fff;
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
 <script src="https://code.jquery.com/jquery-1.10.1.min.js"></script>
 
 <body>
-    <div id="messages">
+  <div style="width:100%;">
+    <div style=" width: 15%; float:left; display:inline-block;">
+      <div class="channels-block">
+        <h1 style="color: #fff; font-family: Raleway;">Channels</h1> <a href="#" style="text-decoration: none; color: #717171;" onclick="createChannel();">Create channel</a><br><br>
+        <div style="display: block;" id="channels"></div>
+      </div>
     </div>
-    <form action="/" method="POST" id="chatForm">
-        <input id="txt" autocomplete="off" autofocus="on"
-            placeholder="type your message here..." /><button>Send</button>
-    </form>
-    <% if(id !== null){ %>
-    <p id="instanceID"><%= id %></p>
-    <% } %>
-
-    <% if(error !== null){ %>
-    <p id="instanceID"><%= error %></p>
-    <% } %>
+    <div style="width: 85%; float: right; display:none;" id="box2">
+      <p id="channel_name" style="color: #fff;"></p>
+      <div id="messages"></div>
+      <br />
+      <form action="/" method="POST" id="chatForm"> <input id="txt" style="width: 95%; background-color: #292b2f; color: #fff; border: none; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px;" autocomplete="off" autofocus="on" placeholder="Type your message here..." /><button style="background-color: #292b2f; padding-top: 4px; padding-bottom: 5px; border: none; color: #fff;">➡</button> </form>
+    </div>
+  </div>
 </body>
 <script>
-    var socket = io.connect('https://accurate-amplified-viburnum.glitch.me/');
-    $('form').submit(function (e) {
-        e.preventDefault(); // prevents page reloading
-        socket.emit('chat_message', rc4($("#instanceID").text(),$('#txt').val()));
-        $('#txt').val('');
-        return false;
-    });
-    socket.on('chat_message', function (msg) {
-        $('#messages').append($('<li>').html(rc4($("#instanceID").text(), msg)));
-    });
-    socket.on('is_online', function (username) {
-        $('#messages').append($('<li>').html(rc4($("#instanceID").text(), username)));
-    });
-    var username = prompt('Username:');
-    socket.emit('username', rc4($("#instanceID").text(), username));
+  var socket = io.connect('http://35.235.118.35:7777/');
+  $('form').submit(function(e) {
+    e.preventDefault();
+    socket.emit("encryptedUsername", username, $("#channel_name").text(), instanceid);
+    socket.emit('chat_message', rc4(instanceid, $('#txt').val()), $("#channel_name").text());
+    $('#txt').val('');
+    return false;
+  });
 
-    function rc4(key, str) {
-        var s = [], j = 0, x, res = '';
-        for (var i = 0; i < 256; i++) {
-            s[i] = i;
-        }
-        for (i = 0; i < 256; i++) {
-            j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
-            x = s[i];
-            s[i] = s[j];
-            s[j] = x;
-        }
-        i = 0;
-        j = 0;
-        for (var y = 0; y < str.length; y++) {
-            i = (i + 1) % 256;
-            j = (j + s[i]) % 256;
-            x = s[i];
-            s[i] = s[j];
-            s[j] = x;
-            res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[j]) % 256]);
-        }
-        return res;
+  function createChannel() {
+    var channel_name = prompt('Name of the channel:');
+    var public_channel = false;
+    var key = genID(20);
+    if (confirm("Public channel ? OK = Public / Cancel = Private")) {
+      public_channel = true;
+    } else {
+      public_channel = false;
+      key = prompt("Password for the channel:");
     }
+    socket.emit('create_chat', channel_name, key, public_channel);
+  }
+  socket.on('channels', function(channels) {
+    $("#channels").empty();
+    for (const element of channels) {
+      $("#channels").append($("<a class=\"btn-channel\" onclick=\"switchChannel('" + element + "');\">").html("# " + element)).append("<br>").append("<br>");
+    }
+  });
+  socket.on('chat_message', function(msg, chat_name) {
+    if (chat_name == $("#channel_name").text())
+      $('#messages').append($('<li>').html(rc4(instanceid, msg)));
+  });
+  var islogging = false;
+  while (!islogging) {
+    var username = prompt('Username:');
+    if (username != "" && username != null && username != undefined)
+      islogging = true;
+  }
+  socket.emit('username', username);
+  var requestID = "";
+
+  function switchChannel(channel) {
+    $("#messages").empty();
+    requestID = genID(10);
+    socket.emit('get_key', channel, requestID);
+  }
+  socket.on('set_key', function(key, channel, requestid) {
+    if (requestid == requestID) {
+      $("#channel_name").text(channel);
+      $("#box2").css("display", "inline-block");
+      instanceid = key;
+    }
+    socket.emit("encryptedUsername", username, $("#channel_name").text(), instanceid);
+  });
+  socket.on('invalid_key', function(user, chat_name) {
+    if(chat_name == $("#channel_name").text() && user == username) {
+      $("#box2").css("display", "none");
+      alert("Invalid key detected in channel: " + chat_name);
+    }
+  });
+  socket.on('need_password', function(channel, requestid) {
+    if (requestid == requestID) {
+      var password= prompt("Password (if incorrect you wont be able to receive / send messages):");
+      $("#channel_name").text(channel);
+      $("#box2").css("display", "inline-block");
+      instanceid = password;
+      socket.emit("encryptedUsername", username, $("#channel_name").text(), instanceid);
+    }
+  });
+  function rc4(key, str) {
+    var s = [],
+      j = 0,
+      x, res = '';
+    for (var i = 0; i < 256; i++) {
+      s[i] = i;
+    }
+    for (i = 0; i < 256; i++) {
+      j = (j + s[i] + key.charCodeAt(i % key.length)) % 256;
+      x = s[i];
+      s[i] = s[j];
+      s[j] = x;
+    }
+    i = 0;
+    j = 0;
+    for (var y = 0; y < str.length; y++) {
+      i = (i + 1) % 256;
+      j = (j + s[i]) % 256;
+      x = s[i];
+      s[i] = s[j];
+      s[j] = x;
+      res += String.fromCharCode(str.charCodeAt(y) ^ s[(s[i] + s[j]) % 256]);
+    }
+    return res;
+  }
+
+  function genID(length) {
+    var result = '';
+    var characters = 'ABDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var charactersLength = characters.length;
+    for (var i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
 </script>
 
 </html>
