@@ -1,6 +1,3 @@
-const jwt = require("jsonwebtoken")
-const jwtKey = "chatnodejs"
-const jwtExpirySeconds = 600
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
@@ -13,7 +10,7 @@ app.use(bodyParser.urlencoded({
 app.set('view engine', 'ejs')
 
 let public_channel = {
-  name: "Public main",
+  name: "main",
   key: genID(10),
   public: true
 };
