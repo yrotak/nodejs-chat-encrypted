@@ -6,11 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200&display=swap" rel="stylesheet">
   <link href='https://css.gg/arrow-right-o.css' rel='stylesheet'>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap" rel="stylesheet">
   <title>Advanced chat</title>
 </head>
 <style>
   body {
-    font-family: 'Montserrat';
+    font-family: "Montserrat", sans-serif;
     background-color: #23272a;
   }
 
@@ -20,7 +21,7 @@
   }
 
   #messages {
-    border-radius: 8px;
+    border-radius: 5px;
     padding: 15px;
     height: 35vh;
     overflow: scroll;
@@ -32,7 +33,7 @@
   .channels-block{
     background-color: #292b2f;
     width: 150px;
-    height: 940px;
+    height: 97vh;
     padding-top: 10px;
     padding-left: 20px;
     padding-right: 100px;
@@ -48,11 +49,22 @@
     background: #292b2f;
     border-radius: 4px;
     color: #72767d;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 
   .btn-channel:hover{
     background-color: #36393f;
     color: #fff;
+  }
+
+  a{
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
@@ -60,22 +72,23 @@
 
 <body>
   <div style="width:100%;">
-    <div style=" width: 15%; float:left; display:inline-block;">
+    <div style="width: 15%; float:left; display:inline-block;">
       <div class="channels-block">
         <h1 style="color: #fff; font-family: Raleway;">Channels</h1> <a href="#" style="text-decoration: none; color: #717171;" onclick="createChannel();">Create channel</a><br><br>
         <div style="display: block;" id="channels"></div>
       </div>
     </div>
-    <div style="width: 85%; float: right; display:none;" id="box2">
+    <div style="width: 80%; float: right; display:none;" id="box2">
       <p id="channel_name" style="color: #fff;"></p>
       <div id="messages"></div>
       <br />
-      <form action="/" method="POST" id="chatForm"> <input id="txt" style="width: 95%; background-color: #292b2f; color: #fff; border: none; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px;" autocomplete="off" autofocus="on" placeholder="Type your message here..." /><button style="background-color: #292b2f; padding-top: 4px; padding-bottom: 5px; border: none; color: #fff;">➡</button> </form>
+      <form action="/" method="POST" id="chatForm"> <input id="txt" style="width: 95%; background-color: #292b2f; color: #fff; border: none; padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; border-bottom-left-radius: 5px; border-top-left-radius: 5px;" autocomplete="off" autofocus="on" placeholder="Type your message here..." /><button style="background-color: #292b2f; padding-top: 4px; padding-bottom: 5px; border: none; color: #fff; border-bottom-right-radius: 5px; border-top-right-radius: 5px;">➡</button> </form>
     </div>
   </div>
 </body>
 <script>
   var socket = io.connect('http://35.235.118.35:7777/');
+  var channels_list= [];
   $('form').submit(function(e) {
     e.preventDefault();
     socket.emit("encryptedUsername", username, $("#channel_name").text(), instanceid);
@@ -97,9 +110,12 @@
     socket.emit('create_chat', channel_name, key, public_channel);
   }
   socket.on('channels', function(channels) {
-    $("#channels").empty();
-    for (const element of channels) {
-      $("#channels").append($("<a class=\"btn-channel\" onclick=\"switchChannel('" + element + "');\">").html("# " + element)).append("<br>").append("<br>");
+    if(channels_list.length != channels.length) {
+      channels_list = channels;
+      $("#channels").empty();
+      for (const element of channels) {
+        $("#channels").append($("<a class=\"btn-channel\" onclick=\"switchChannel('" + element + "');\">").html("# " + element)).append("<br>").append("<br>");
+      }
     }
   });
   socket.on('chat_message', function(msg, chat_name) {
@@ -126,7 +142,6 @@
       $("#box2").css("display", "inline-block");
       instanceid = key;
     }
-    socket.emit("encryptedUsername", username, $("#channel_name").text(), instanceid);
   });
   socket.on('invalid_key', function(user, chat_name) {
     if(chat_name == $("#channel_name").text() && user == username) {
