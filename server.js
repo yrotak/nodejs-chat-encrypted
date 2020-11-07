@@ -1,43 +1,94 @@
+const jwt = require("jsonwebtoken")
+const jwtKey = "chatnodejs"
+const jwtExpirySeconds = 600
 const express = require('express')
 const bodyParser = require('body-parser')
 const app = express()
 const http = require('http').Server(app);
 const io = require('socket.io')(http);
 app.use(express.static('public'))
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.urlencoded({
+  extended: true
+}))
 app.set('view engine', 'ejs')
 
-let instanceID = "";
-
-app.get('/', function (req, res) {
-  res.render('index', { id: instanceID, error: null });
+let public_channel = {
+  name: "Public main",
+  key: genID(10),
+  public: true
+};
+let chats = [public_channel];
+let usernames = [];
+let chatsnames = [];
+let instanceID = "test";
+app.get('/chat', function(req, res) {
+  res.render('chat', {
+    id: instanceID,
+    error: null
+  });
 })
-const server = http.listen(3000, function () {
-  instanceID = genID(10);
-  console.log('Started on 3000');
+const server = http.listen(7777, function() {
+  console.log("started");
 });
-io.sockets.on('connection', function (socket) {
-  socket.on('username', function (username) {
-    socket.username = username;
-    io.emit('is_online', rc4(instanceID, '<i style="color: green;">' + rc4(instanceID, socket.username) + ' has join the group</i>'));
-    console.log("new message(encrypted):" + rc4(instanceID, '<i style="color: green;">' + rc4(instanceID, socket.username) + ' has join the group</i>'));
+io.sockets.on('connection', function(socket) {
+  setInterval(function() {
+    chatsnames = [];
+    for (const element of chats) {
+      if (element != undefined && element != null)
+        chatsnames.push(element.name);
+    }
+    io.emit('channels', chatsnames);
+  }, 1000);
+  socket.on('create_chat', function(name, key, public) {
+    var alreadyUsed = false;
+    for (const element of chatsnames)
+      if (element == name)
+        alreadyUsed = true;
+    if (!alreadyUsed) {
+      if (name !== "" && name.indexOf("<script>") <= 0 && name.indexOf("</script>") <= 0 && name.indexOf("<style>") <= 0 && name.indexOf("</style>") <= 0) {
+        if (key !== "" && key.indexOf("<script>") <= 0 && key.indexOf("</script>") <= 0 && key.indexOf("<style>") <= 0 && key.indexOf("</style>") <= 0) {
+          chats.push({
+            name: name,
+            key: key,
+            public: public
+          });
+          console.log("created");
+        }
+      }
+    }
+  });
+  socket.on('get_key', function(channel, requestid) {
+    if (getChannelAuth(channel)) {
+      io.emit('set_key', getChannelKey(channel), channel, requestid);
+    } else {
+      io.emit('need_password', channel, requestid);
+    }
+  });
+  socket.on('username', function(username, chat_name) {
+    if (rc4(getChannelKey(chat_name), username) !== "" && rc4(getChannelKey(chat_name), username).indexOf("<script>") <= 0 && rc4(getChannelKey(chat_name), username).indexOf("</script>") <= 0 && rc4(getChannelKey(chat_name), username).indexOf("<style>") <= 0 && rc4(getChannelKey(chat_name), username).indexOf("</style>") <= 0) {
+      socket.username = username;
+    } else {
+      socket.username = rc4(getChannelKey(chat_name), genID(5));
+    }
+  });
+  socket.on('encryptedUsername', function(user, chat_name, key) {
+    if (getChannelKey(chat_name) != key) {
+      io.emit('invalid_key', user, chat_name);
+    }
   });
 
-  socket.on('disconnect', function (username) {
-    io.emit('is_online', rc4(instanceID, '<i style="color: red;">' + rc4(instanceID, socket.username) + ' has left the group</i>'));
-    console.log("new message(encrypted):" + rc4(instanceID, '<i style="color: red;">' + rc4(instanceID, socket.username) + ' has left the group</i>'));
-  })
-
-  socket.on('chat_message', function (message) {
-    if (message !== "" && message.indexOf("<script>") <= 0 && message.indexOf("</script>") <= 0 && message.indexOf("<style>") <= 0 && message.indexOf("</style>") <= 0) {
-      io.emit('chat_message', rc4(instanceID, '<strong>' + rc4(instanceID, socket.username) + '</strong>: ' + rc4(instanceID,message)));
-      console.log("new message(encrypted):" + rc4(instanceID, '<strong>' + rc4(instanceID, socket.username) + '</strong>: ' + message));
+  socket.on('chat_message', function(message, chat_name) {
+    if (rc4(getChannelKey(chat_name), message) !== "" && rc4(getChannelKey(chat_name), message).indexOf("<script>") <= 0 && rc4(getChannelKey(chat_name), message).indexOf("</script>") <= 0 && rc4(getChannelKey(chat_name), message).indexOf("<style>") <= 0 && rc4(getChannelKey(chat_name), message).indexOf("</style>") <= 0) {
+      io.emit('chat_message', rc4(getChannelKey(chat_name), '<strong>' + socket.username + '</strong>: ' + rc4(getChannelKey(chat_name), message)), chat_name);
     }
   });
 
 });
+
 function rc4(key, str) {
-  var s = [], j = 0, x, res = '';
+  var s = [],
+    j = 0,
+    x, res = '';
   if (str !== undefined) {
     for (var i = 0; i < 256; i++) {
       s[i] = i;
@@ -61,6 +112,25 @@ function rc4(key, str) {
   }
   return res;
 }
+
+function getChannelKey(channel) {
+  var key = "";
+  for (const element of chats) {
+    if (element.name == channel)
+      key = element.key;
+  }
+  return key;
+}
+
+function getChannelAuth(channel) {
+  var public = false;
+  for (const element of chats) {
+    if (element.name == channel)
+      public = element.public;
+  }
+  return public;
+}
+
 function genID(length) {
   var result = '';
   var characters = 'ABDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
