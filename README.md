@@ -8,4 +8,4 @@ This is an advanced NodeJs chat. Every packets are encrypted with RC4.<br>
 -Simple responsive
 
 ## Next update:
--Patching exploits (Crash exploit)<br>
+- Idk i think i finished this project
