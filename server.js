@@ -42,14 +42,16 @@ io.sockets.on('connection', function(socket) {
       if (element == name)
         alreadyUsed = true;
     if (!alreadyUsed) {
-      if (name !== "" && name.indexOf("<script>") <= 0 && name.indexOf("</script>") <= 0 && name.indexOf("<style>") <= 0 && name.indexOf("</style>") <= 0) {
-        if (key !== "" && key.indexOf("<script>") <= 0 && key.indexOf("</script>") <= 0 && key.indexOf("<style>") <= 0 && key.indexOf("</style>") <= 0) {
-          chats.push({
-            name: name,
-            key: key,
-            public: public
-          });
-          console.log("created");
+      if(name != null && name != undefined && key != null && key != undefined) {
+        if (name !== "" && name.indexOf("<script>") <= 0 && name.indexOf("</script>") <= 0 && name.indexOf("<style>") <= 0 && name.indexOf("</style>") <= 0) {
+          if (key !== "" && key.indexOf("<script>") <= 0 && key.indexOf("</script>") <= 0 && key.indexOf("<style>") <= 0 && key.indexOf("</style>") <= 0) {
+            chats.push({
+              name: name,
+              key: key,
+              public: public
+            });
+            console.log("created");
+          }
         }
       }
     }
